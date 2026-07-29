@@ -46,11 +46,11 @@ LOGICPULSE.HUDController = class {
         var total = this._buttons.length;
         if (total === 0) return;
 
-        // Column mapping: left buttons (0-3), right buttons (4-5)
+        // Column mapping
         var leftColStart = 0;
-        var leftColEnd = 3;
-        var rightColStart = 4;
-        var rightColEnd = 5;
+        var leftColEnd = 6;
+        var rightColStart = 7;
+        var rightColEnd = 7;
 
         // Up / Down
         if (Input.isTriggered('up') || Input.isTriggered('w')) {
@@ -71,7 +71,7 @@ LOGICPULSE.HUDController = class {
         }
 
         // Left / Right – switch columns
-        if (Input.isTriggered('left') || Input.isTriggered('a')) {
+        if (Input.isTriggered('right') || Input.isTriggered('a')) {
             if (current >= rightColStart && current <= rightColEnd) {
                 // Map right column index to left column (same row, clamp)
                 var row = current - rightColStart; // 0 or 1
@@ -79,7 +79,7 @@ LOGICPULSE.HUDController = class {
                 current = leftIndex;
                 pressed = true;
             }
-        } else if (Input.isTriggered('right') || Input.isTriggered('d')) {
+        } else if (Input.isTriggered('left') || Input.isTriggered('d')) {
             if (current >= leftColStart && current <= leftColEnd) {
                 var row = current - leftColStart;
                 var rightIndex = Math.min(rightColStart + row, rightColEnd);

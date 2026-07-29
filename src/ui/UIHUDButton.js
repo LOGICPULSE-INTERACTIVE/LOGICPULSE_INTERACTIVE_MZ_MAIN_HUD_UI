@@ -9,6 +9,8 @@ LOGICPULSE.UI.HUDButton = class extends LOGICPULSE.UI.Element {
         this._text = options.text || "";
         this._onClick = options.onClick || null;
         this._isHovered = false;
+        this._textOffsetX = options.textOffsetX || 0;
+        this._textOffsetY = options.textOffsetY || 0;
         this.move(options.x || 0, options.y || 0);
         this.create();
     }
@@ -37,7 +39,15 @@ LOGICPULSE.UI.HUDButton = class extends LOGICPULSE.UI.Element {
             this._textSprite.bitmap.textColor = "#ffffff";
             this._textSprite.bitmap.outlineColor = "rgba(0,0,0,0.8)";
             this._textSprite.bitmap.outlineWidth = 4;
-            this._textSprite.bitmap.drawText(this._text, 0, 0, this._width, this._height, "center");
+            // Use full width/height, offset the origin
+            this._textSprite.bitmap.drawText(
+                this._text,
+                this._textOffsetX,
+                this._textOffsetY,
+                this._width,
+                this._height,
+                "center"
+            );
             this.addChild(this._textSprite);
         }
     }

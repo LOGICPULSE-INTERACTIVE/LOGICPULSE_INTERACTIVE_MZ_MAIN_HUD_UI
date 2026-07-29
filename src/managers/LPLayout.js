@@ -2,15 +2,15 @@ LOGICPULSE.HUDLayout = {
     Images: [
         {key: "Background", name: LOGICPULSE.Assets.Images.HUD.Background, x: 0, y: 0},
         {key: "TopHeader", name: LOGICPULSE.Assets.Images.HUD.TopHeader, x: 0, y: 0},
-        {key: "CaseNotesBox", name: LOGICPULSE.Assets.Images.HUD.CaseNotesBox, x: 345, y: 535},
+        {key: "CaseNotesBox", name: LOGICPULSE.Assets.Images.HUD.CaseNotesBox, x: 330, y: 530},
         {key: "CharacterStatusBox", name: LOGICPULSE.Assets.Images.HUD.CharacterStatusBox, x: 1009, y: 69},
         {key: "QuestBox", name: LOGICPULSE.Assets.Images.HUD.QuestBox, x: 330, y: 208},
-        {key: "MapBox", name: LOGICPULSE.Assets.Images.HUD.MapBox, x: 1010, y: 300},
+        {key: "MapBox", name: LOGICPULSE.Assets.Images.HUD.MapBox, x: 29, y: 420},
         {key: "PortraitBox", name: LOGICPULSE.Assets.Images.HUD.PortraitBox, x: 8, y: 76},
     ],
     animations: {
         CityPicture: {x: 307, y: 61},
-        Portrait: {x: -8, y: 80},
+        Portrait: {x: -8, y: 75},
     },
     CharacterStatusBox: {
         Gauges: {
@@ -30,17 +30,16 @@ LOGICPULSE.HUDLayout = {
         Accessory: {x: 125, y: 180, w: 100, h: 20, align: "left", font: "Arno Pro", fontSize: 16, color: "#dbffe3"},
     },
     LeftButtons: {
-        Inventory: {x: 0, y: 470, width: 326, height: 60},
-        Skill: {x: 0, y: 535, width: 326, height: 60},
-        SaveLoad: {x: 0, y: 600, width: 326, height: 60},
-        Setting: {x: 0, y: 665, width: 326, height: 60},
-        ButtonsText: {x: 0, y: 30, width: 326, height: 60, align: "center", font: "Arno Pro", fontSize: 30}
+        Inventory:   {x: 1007, y: 310, width: 270, height: 58, text: "Inventory", textOffsetX: 4, textOffsetY: 0},
+        Equipment:   {x: 1007, y: 368, width: 270, height: 58, text: "Equipment", textOffsetX: 4, textOffsetY: 0},
+        QuestDB:     {x: 1007, y: 426, width: 270, height: 58, text: "Quest Database", textOffsetX: 4, textOffsetY: 0},
+        Skill:       {x: 1007, y: 484, width: 270, height: 58, text: "Skill Database", textOffsetX: 4, textOffsetY: 0},
+        SaveLoad:    {x: 1007, y: 542, width: 270, height: 58, text: "Save/Load", textOffsetX: 4, textOffsetY: 0},
+        Setting:     {x: 1007, y: 600, width: 270, height: 58, text: "Setting", textOffsetX: 4, textOffsetY: 0},
+        Exit:        {x: 1007, y: 658, width: 270, height: 58, text: "Exit Game", textOffsetX: 4, textOffsetY: 0},
     },
     RightButtons: {
-        Map: {x: 1026, y: 535, width: 237, height: 54},
-        Exit: {x: 1025, y: 660, width: 247, height: 50},
-        MapButtonsText: {x: 0, y: 27, width: 327, height: 54, align: "center", font: "Arno Pro", fontSize: 30},
-        ExitButtonsText: {x: 0, y: 25, width: 327, height: 54, align: "center", font: "Arno Pro", fontSize: 30}
+        Map: {x: 45, y: 654, width: 237, height: 54, text: "Inspect Map", textOffsetX: -3,  textOffsetY: -2 },
     },
     TopHeaderText: {
         Level: {x: 60, y: 30, w: 120, h: 40, align: "left", fontSize: 18, color: "#89c3fc"},
@@ -49,7 +48,7 @@ LOGICPULSE.HUDLayout = {
         GoldValue: {x: 280, y: 30, w: 120, h: 40, align: "left", fontSize: 18, color: "#ffffff"},
     },
     QuestBox: {
-        CaseTitle: {x: 60, y: 10, w: 560, h: 32, align: "left", fontSize: 32, color: "#ff8000"},
+        CaseTitle: {x: 60, y: 5, w: 560, h: 32, align: "left", fontSize: 32, color: "#ff8000"},
         CaseNumber: {x: 405, y: 320, w: 540, h: 32, align: "left", fontSize: 20, color: "#ff8000"},
         Hint1: {x: 415, y: 365, w: 540, h: 32, align: "left", fontSize: 20, color: "#ffffff"},
         Hint2: {x: 415, y: 400, w: 540, h: 32, align: "left", fontSize: 20, color: "#ffffff"},

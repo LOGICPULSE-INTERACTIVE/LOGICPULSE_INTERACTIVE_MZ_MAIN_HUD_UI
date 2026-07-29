@@ -8,28 +8,31 @@ LOGICPULSE.Scene_HUD = class extends Scene_Base {
         super.create();
         this._controller = new LOGICPULSE.HUDController(this);
 
-        // 1. Full background
+        // 1. Background (full screen)
         this.createBackgroundImage();
 
         // 2. City (animated background)
         this.createCity();
 
-        // 3. Boxes (static sprites)
+        // 3. Boxes (all except MapBox)
         this.createBoxes();
 
         // 4. Portrait (on top of portrait box)
         this.createPortrait();
 
-        // 5. Header texts (top header)
+        // 5. MapBox (on top of portrait, behind buttons)
+        this.createMapBox();
+
+        // 6. Header texts (top header)
         this.createHeaderContent();
 
-        // 6. Status content (gauges + stats)
+        // 7. Status content (gauges + stats)
         this.createStatusContent();
 
-        // 7. Quest content
+        // 8. Quest content
         this.createQuestContent();
 
-        // 8. Buttons (on top)
+        // 9. Buttons (on top)
         this.createButtons();
 
         this._fadeIn = true;
@@ -51,6 +54,7 @@ LOGICPULSE.Scene_HUD = class extends Scene_Base {
         for (var i = 0; i < layoutImages.length; i++) {
             var img = layoutImages[i];
             if (img.key === "Background") continue;
+            if (img.key === "MapBox") continue;   // we'll add it later
             var sprite = LOGICPULSE.Assets.createSprite(LOGICPULSE.Assets.Folders.HUD, img.name);
             sprite.x = img.x;
             sprite.y = img.y;
@@ -59,8 +63,8 @@ LOGICPULSE.Scene_HUD = class extends Scene_Base {
             else if (img.key === "CaseNotesBox") this._caseNotesBoxSprite = sprite;
             else if (img.key === "CharacterStatusBox") this._statusBoxSprite = sprite;
             else if (img.key === "QuestBox") this._questBoxSprite = sprite;
-            else if (img.key === "MapBox") this._mapBoxSprite = sprite;
             else if (img.key === "PortraitBox") this._portraitBoxSprite = sprite;
+            // MapBox is handled separately
         }
     }
 
@@ -95,6 +99,28 @@ LOGICPULSE.Scene_HUD = class extends Scene_Base {
             interval: 4
         });
         this.addChild(this._portrait);
+    }
+
+    createMapBox() {
+        // Find the MapBox entry from the layout
+        var layoutImages = LOGICPULSE.HUDLayout.Images;
+        var mapBoxData = null;
+        for (var i = 0; i < layoutImages.length; i++) {
+            if (layoutImages[i].key === "MapBox") {
+                mapBoxData = layoutImages[i];
+                break;
+            }
+        }
+        if (!mapBoxData) return;
+
+        var sprite = LOGICPULSE.Assets.createSprite(
+            LOGICPULSE.Assets.Folders.HUD,
+            mapBoxData.name
+        );
+        sprite.x = mapBoxData.x;
+        sprite.y = mapBoxData.y;
+        this.addChild(sprite);
+        this._mapBoxSprite = sprite;
     }
 
     // ---- Header Texts ----
@@ -162,28 +188,49 @@ LOGICPULSE.Scene_HUD = class extends Scene_Base {
         var folders = LOGICPULSE.Assets.Folders;
         var images = LOGICPULSE.Assets.Images.HUD;
 
-        var leftKeys = ["Inventory", "Skill", "SaveLoad", "Setting"];
+        // ---- Left buttons ----
+        var leftKeys = ["Inventory", "Equipment", "QuestDB", "Skill", "SaveLoad", "Setting", "Exit"];
         var leftActions = {
-            Inventory: function() { SceneManager.push(LOGICPULSE.Scenes.Inventory); },
-            Skill: function() { SceneManager.push(Scene_Skill); },
-            SaveLoad: function() { SceneManager.push(LOGICPULSE.Scenes.SaveLoad); },
-            Setting: function() { SceneManager.push(Scene_Options); }
+            Inventory: function () { SceneManager.push(LOGICPULSE.Scenes.Inventory); },
+            Equipment: function () { SceneManager.push(Scene_Equip); },
+            QuestDB: function () { /* placeholder */ },
+            Skill: function () { SceneManager.push(Scene_Skill); },
+            SaveLoad: function () { SceneManager.push(LOGICPULSE.Scenes.SaveLoad); },
+            Setting: function () { SceneManager.push(Scene_Options); },
+            Exit: function () { SceneManager.exit(); }
         };
-        var LeftTexts = ["Inventory", "Skill Database", "Save/Load", "Setting"];
+        // Default texts – you can override by adding a "text" field in the layout for each button
+        var defaultLeftTexts = ["Inventory", "Equipment", "Quest Database", "Skill Database", "Save/Load", "Setting", "Exit Game"];
 
         for (var i = 0; i < leftKeys.length; i++) {
             var key = leftKeys[i];
             var cfg = leftLayout[key];
+            if (!cfg) continue;
+
+            // Use cfg.text if available, otherwise use default from array
+            var buttonText = cfg.text || defaultLeftTexts[i];
+
+            var idleBitmap, hoverBitmap;
+            if (key === "Exit") {
+                idleBitmap = LOGICPULSE.Assets.load(folders.HUD, images.ButtonExitIdle);
+                hoverBitmap = LOGICPULSE.Assets.load(folders.HUD, images.ButtonExitHover);
+            } else {
+                idleBitmap = LOGICPULSE.Assets.load(folders.HUD, images.LeftButtonIdle);
+                hoverBitmap = LOGICPULSE.Assets.load(folders.HUD, images.LeftButtonHover);
+            }
+
             var btn = new LOGICPULSE.UI.HUDButton({
                 x: cfg.x,
                 y: cfg.y,
                 width: cfg.width,
                 height: cfg.height,
-                idleBitmap: LOGICPULSE.Assets.load(folders.HUD, images.LeftButtonIdle),
-                hoverBitmap: LOGICPULSE.Assets.load(folders.HUD, images.LeftButtonHover),
-                text: LeftTexts[i],   // <-- fixed
-                fontSize: 30,
+                idleBitmap: idleBitmap,
+                hoverBitmap: hoverBitmap,
+                text: buttonText,
+                fontSize: 28,
                 textColor: "#ffffff",
+                textOffsetX: cfg.textOffsetX || 0,
+                textOffsetY: cfg.textOffsetY || 0,
                 onClick: leftActions[key]
             });
             this.addChild(btn);
@@ -191,17 +238,21 @@ LOGICPULSE.Scene_HUD = class extends Scene_Base {
             this._controller.registerButton(btn);
         }
 
-        var rightKeys = ["Map", "Exit"];
+        // ---- Right buttons (Map) ----
+        var rightKeys = ["Map"];
         var rightActions = {
-            Map: function() { /* placeholder */ },
-            Exit: function() { SceneManager.exit(); }
+            Map: function () { /* placeholder */ }
         };
-        var rightIdle = [images.ButtonMapIdle, images.ButtonExitIdle];
-        var rightHover = [images.ButtonMapHover, images.ButtonExitHover];
-        var rightTexts = ["Inspect Map", "Exit The Game"];
+        var rightIdle = [images.ButtonMapIdle];
+        var rightHover = [images.ButtonMapHover];
+
         for (var j = 0; j < rightKeys.length; j++) {
             var key = rightKeys[j];
             var cfg = rightLayout[key];
+            if (!cfg) continue;
+
+            var buttonText = cfg.text || "Inspect Map";
+
             var btn = new LOGICPULSE.UI.HUDButton({
                 x: cfg.x,
                 y: cfg.y,
@@ -209,9 +260,11 @@ LOGICPULSE.Scene_HUD = class extends Scene_Base {
                 height: cfg.height,
                 idleBitmap: LOGICPULSE.Assets.load(folders.HUD, rightIdle[j]),
                 hoverBitmap: LOGICPULSE.Assets.load(folders.HUD, rightHover[j]),
-                text: rightTexts[j],
-                fontSize: 30,
+                text: buttonText,
+                fontSize: 28,
                 textColor: "#ffffff",
+                textOffsetX: cfg.textOffsetX || 0,
+                textOffsetY: cfg.textOffsetY || 0,
                 onClick: rightActions[key]
             });
             this.addChild(btn);

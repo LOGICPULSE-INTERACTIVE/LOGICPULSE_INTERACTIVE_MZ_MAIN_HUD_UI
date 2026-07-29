@@ -16,7 +16,7 @@
  *
  * Edit the files inside /src instead.
  *
- * Build Date: 2026-07-27T15:39:41.767Z
+ * Build Date: 2026-07-28T21:02:52.555Z
  * ============================================================================
  */
 
@@ -123,15 +123,15 @@ LOGICPULSE.HUDLayout = {
     Images: [
         {key: "Background", name: LOGICPULSE.Assets.Images.HUD.Background, x: 0, y: 0},
         {key: "TopHeader", name: LOGICPULSE.Assets.Images.HUD.TopHeader, x: 0, y: 0},
-        {key: "CaseNotesBox", name: LOGICPULSE.Assets.Images.HUD.CaseNotesBox, x: 345, y: 535},
+        {key: "CaseNotesBox", name: LOGICPULSE.Assets.Images.HUD.CaseNotesBox, x: 330, y: 530},
         {key: "CharacterStatusBox", name: LOGICPULSE.Assets.Images.HUD.CharacterStatusBox, x: 1009, y: 69},
         {key: "QuestBox", name: LOGICPULSE.Assets.Images.HUD.QuestBox, x: 330, y: 208},
-        {key: "MapBox", name: LOGICPULSE.Assets.Images.HUD.MapBox, x: 1010, y: 300},
+        {key: "MapBox", name: LOGICPULSE.Assets.Images.HUD.MapBox, x: 29, y: 420},
         {key: "PortraitBox", name: LOGICPULSE.Assets.Images.HUD.PortraitBox, x: 8, y: 76},
     ],
     animations: {
         CityPicture: {x: 307, y: 61},
-        Portrait: {x: -8, y: 80},
+        Portrait: {x: -8, y: 75},
     },
     CharacterStatusBox: {
         Gauges: {
@@ -151,17 +151,16 @@ LOGICPULSE.HUDLayout = {
         Accessory: {x: 125, y: 180, w: 100, h: 20, align: "left", font: "Arno Pro", fontSize: 16, color: "#dbffe3"},
     },
     LeftButtons: {
-        Inventory: {x: 0, y: 470, width: 326, height: 60},
-        Skill: {x: 0, y: 535, width: 326, height: 60},
-        SaveLoad: {x: 0, y: 600, width: 326, height: 60},
-        Setting: {x: 0, y: 665, width: 326, height: 60},
-        ButtonsText: {x: 0, y: 30, width: 326, height: 60, align: "center", font: "Arno Pro", fontSize: 30}
+        Inventory:   {x: 1007, y: 310, width: 270, height: 58, text: "Inventory", textOffsetX: 4, textOffsetY: 0},
+        Equipment:   {x: 1007, y: 368, width: 270, height: 58, text: "Equipment", textOffsetX: 4, textOffsetY: 0},
+        QuestDB:     {x: 1007, y: 426, width: 270, height: 58, text: "Quest Database", textOffsetX: 4, textOffsetY: 0},
+        Skill:       {x: 1007, y: 484, width: 270, height: 58, text: "Skill Database", textOffsetX: 4, textOffsetY: 0},
+        SaveLoad:    {x: 1007, y: 542, width: 270, height: 58, text: "Save/Load", textOffsetX: 4, textOffsetY: 0},
+        Setting:     {x: 1007, y: 600, width: 270, height: 58, text: "Setting", textOffsetX: 4, textOffsetY: 0},
+        Exit:        {x: 1007, y: 658, width: 270, height: 58, text: "Exit Game", textOffsetX: 4, textOffsetY: 0},
     },
     RightButtons: {
-        Map: {x: 1026, y: 535, width: 237, height: 54},
-        Exit: {x: 1025, y: 660, width: 247, height: 50},
-        MapButtonsText: {x: 0, y: 27, width: 327, height: 54, align: "center", font: "Arno Pro", fontSize: 30},
-        ExitButtonsText: {x: 0, y: 25, width: 327, height: 54, align: "center", font: "Arno Pro", fontSize: 30}
+        Map: {x: 45, y: 654, width: 237, height: 54, text: "Inspect Map", textOffsetX: -3,  textOffsetY: -2 },
     },
     TopHeaderText: {
         Level: {x: 60, y: 30, w: 120, h: 40, align: "left", fontSize: 18, color: "#89c3fc"},
@@ -170,7 +169,7 @@ LOGICPULSE.HUDLayout = {
         GoldValue: {x: 280, y: 30, w: 120, h: 40, align: "left", fontSize: 18, color: "#ffffff"},
     },
     QuestBox: {
-        CaseTitle: {x: 60, y: 10, w: 560, h: 32, align: "left", fontSize: 32, color: "#ff8000"},
+        CaseTitle: {x: 60, y: 5, w: 560, h: 32, align: "left", fontSize: 32, color: "#ff8000"},
         CaseNumber: {x: 405, y: 320, w: 540, h: 32, align: "left", fontSize: 20, color: "#ff8000"},
         Hint1: {x: 415, y: 365, w: 540, h: 32, align: "left", fontSize: 20, color: "#ffffff"},
         Hint2: {x: 415, y: 400, w: 540, h: 32, align: "left", fontSize: 20, color: "#ffffff"},
@@ -367,11 +366,11 @@ LOGICPULSE.HUDController = class {
         var total = this._buttons.length;
         if (total === 0) return;
 
-        // Column mapping: left buttons (0-3), right buttons (4-5)
+        // Column mapping
         var leftColStart = 0;
-        var leftColEnd = 3;
-        var rightColStart = 4;
-        var rightColEnd = 5;
+        var leftColEnd = 6;
+        var rightColStart = 7;
+        var rightColEnd = 7;
 
         // Up / Down
         if (Input.isTriggered('up') || Input.isTriggered('w')) {
@@ -392,7 +391,7 @@ LOGICPULSE.HUDController = class {
         }
 
         // Left / Right – switch columns
-        if (Input.isTriggered('left') || Input.isTriggered('a')) {
+        if (Input.isTriggered('right') || Input.isTriggered('a')) {
             if (current >= rightColStart && current <= rightColEnd) {
                 // Map right column index to left column (same row, clamp)
                 var row = current - rightColStart; // 0 or 1
@@ -400,7 +399,7 @@ LOGICPULSE.HUDController = class {
                 current = leftIndex;
                 pressed = true;
             }
-        } else if (Input.isTriggered('right') || Input.isTriggered('d')) {
+        } else if (Input.isTriggered('left') || Input.isTriggered('d')) {
             if (current >= leftColStart && current <= leftColEnd) {
                 var row = current - leftColStart;
                 var rightIndex = Math.min(rightColStart + row, rightColEnd);
@@ -702,6 +701,8 @@ LOGICPULSE.UI.HUDButton = class extends LOGICPULSE.UI.Element {
         this._text = options.text || "";
         this._onClick = options.onClick || null;
         this._isHovered = false;
+        this._textOffsetX = options.textOffsetX || 0;
+        this._textOffsetY = options.textOffsetY || 0;
         this.move(options.x || 0, options.y || 0);
         this.create();
     }
@@ -730,7 +731,15 @@ LOGICPULSE.UI.HUDButton = class extends LOGICPULSE.UI.Element {
             this._textSprite.bitmap.textColor = "#ffffff";
             this._textSprite.bitmap.outlineColor = "rgba(0,0,0,0.8)";
             this._textSprite.bitmap.outlineWidth = 4;
-            this._textSprite.bitmap.drawText(this._text, 0, 0, this._width, this._height, "center");
+            // Use full width/height, offset the origin
+            this._textSprite.bitmap.drawText(
+                this._text,
+                this._textOffsetX,
+                this._textOffsetY,
+                this._width,
+                this._height,
+                "center"
+            );
             this.addChild(this._textSprite);
         }
     }
@@ -997,28 +1006,31 @@ LOGICPULSE.Scene_HUD = class extends Scene_Base {
         super.create();
         this._controller = new LOGICPULSE.HUDController(this);
 
-        // 1. Full background
+        // 1. Background (full screen)
         this.createBackgroundImage();
 
         // 2. City (animated background)
         this.createCity();
 
-        // 3. Boxes (static sprites)
+        // 3. Boxes (all except MapBox)
         this.createBoxes();
 
         // 4. Portrait (on top of portrait box)
         this.createPortrait();
 
-        // 5. Header texts (top header)
+        // 5. MapBox (on top of portrait, behind buttons)
+        this.createMapBox();
+
+        // 6. Header texts (top header)
         this.createHeaderContent();
 
-        // 6. Status content (gauges + stats)
+        // 7. Status content (gauges + stats)
         this.createStatusContent();
 
-        // 7. Quest content
+        // 8. Quest content
         this.createQuestContent();
 
-        // 8. Buttons (on top)
+        // 9. Buttons (on top)
         this.createButtons();
 
         this._fadeIn = true;
@@ -1040,6 +1052,7 @@ LOGICPULSE.Scene_HUD = class extends Scene_Base {
         for (var i = 0; i < layoutImages.length; i++) {
             var img = layoutImages[i];
             if (img.key === "Background") continue;
+            if (img.key === "MapBox") continue;   // we'll add it later
             var sprite = LOGICPULSE.Assets.createSprite(LOGICPULSE.Assets.Folders.HUD, img.name);
             sprite.x = img.x;
             sprite.y = img.y;
@@ -1048,8 +1061,8 @@ LOGICPULSE.Scene_HUD = class extends Scene_Base {
             else if (img.key === "CaseNotesBox") this._caseNotesBoxSprite = sprite;
             else if (img.key === "CharacterStatusBox") this._statusBoxSprite = sprite;
             else if (img.key === "QuestBox") this._questBoxSprite = sprite;
-            else if (img.key === "MapBox") this._mapBoxSprite = sprite;
             else if (img.key === "PortraitBox") this._portraitBoxSprite = sprite;
+            // MapBox is handled separately
         }
     }
 
@@ -1084,6 +1097,28 @@ LOGICPULSE.Scene_HUD = class extends Scene_Base {
             interval: 4
         });
         this.addChild(this._portrait);
+    }
+
+    createMapBox() {
+        // Find the MapBox entry from the layout
+        var layoutImages = LOGICPULSE.HUDLayout.Images;
+        var mapBoxData = null;
+        for (var i = 0; i < layoutImages.length; i++) {
+            if (layoutImages[i].key === "MapBox") {
+                mapBoxData = layoutImages[i];
+                break;
+            }
+        }
+        if (!mapBoxData) return;
+
+        var sprite = LOGICPULSE.Assets.createSprite(
+            LOGICPULSE.Assets.Folders.HUD,
+            mapBoxData.name
+        );
+        sprite.x = mapBoxData.x;
+        sprite.y = mapBoxData.y;
+        this.addChild(sprite);
+        this._mapBoxSprite = sprite;
     }
 
     // ---- Header Texts ----
@@ -1151,28 +1186,49 @@ LOGICPULSE.Scene_HUD = class extends Scene_Base {
         var folders = LOGICPULSE.Assets.Folders;
         var images = LOGICPULSE.Assets.Images.HUD;
 
-        var leftKeys = ["Inventory", "Skill", "SaveLoad", "Setting"];
+        // ---- Left buttons ----
+        var leftKeys = ["Inventory", "Equipment", "QuestDB", "Skill", "SaveLoad", "Setting", "Exit"];
         var leftActions = {
-            Inventory: function() { SceneManager.push(LOGICPULSE.Scenes.Inventory); },
-            Skill: function() { SceneManager.push(Scene_Skill); },
-            SaveLoad: function() { SceneManager.push(LOGICPULSE.Scenes.SaveLoad); },
-            Setting: function() { SceneManager.push(Scene_Options); }
+            Inventory: function () { SceneManager.push(LOGICPULSE.Scenes.Inventory); },
+            Equipment: function () { SceneManager.push(Scene_Equip); },
+            QuestDB: function () { /* placeholder */ },
+            Skill: function () { SceneManager.push(Scene_Skill); },
+            SaveLoad: function () { SceneManager.push(LOGICPULSE.Scenes.SaveLoad); },
+            Setting: function () { SceneManager.push(Scene_Options); },
+            Exit: function () { SceneManager.exit(); }
         };
-        var LeftTexts = ["Inventory", "Skill Database", "Save/Load", "Setting"];
+        // Default texts – you can override by adding a "text" field in the layout for each button
+        var defaultLeftTexts = ["Inventory", "Equipment", "Quest Database", "Skill Database", "Save/Load", "Setting", "Exit Game"];
 
         for (var i = 0; i < leftKeys.length; i++) {
             var key = leftKeys[i];
             var cfg = leftLayout[key];
+            if (!cfg) continue;
+
+            // Use cfg.text if available, otherwise use default from array
+            var buttonText = cfg.text || defaultLeftTexts[i];
+
+            var idleBitmap, hoverBitmap;
+            if (key === "Exit") {
+                idleBitmap = LOGICPULSE.Assets.load(folders.HUD, images.ButtonExitIdle);
+                hoverBitmap = LOGICPULSE.Assets.load(folders.HUD, images.ButtonExitHover);
+            } else {
+                idleBitmap = LOGICPULSE.Assets.load(folders.HUD, images.LeftButtonIdle);
+                hoverBitmap = LOGICPULSE.Assets.load(folders.HUD, images.LeftButtonHover);
+            }
+
             var btn = new LOGICPULSE.UI.HUDButton({
                 x: cfg.x,
                 y: cfg.y,
                 width: cfg.width,
                 height: cfg.height,
-                idleBitmap: LOGICPULSE.Assets.load(folders.HUD, images.LeftButtonIdle),
-                hoverBitmap: LOGICPULSE.Assets.load(folders.HUD, images.LeftButtonHover),
-                text: LeftTexts[i],   // <-- fixed
-                fontSize: 30,
+                idleBitmap: idleBitmap,
+                hoverBitmap: hoverBitmap,
+                text: buttonText,
+                fontSize: 28,
                 textColor: "#ffffff",
+                textOffsetX: cfg.textOffsetX || 0,
+                textOffsetY: cfg.textOffsetY || 0,
                 onClick: leftActions[key]
             });
             this.addChild(btn);
@@ -1180,17 +1236,21 @@ LOGICPULSE.Scene_HUD = class extends Scene_Base {
             this._controller.registerButton(btn);
         }
 
-        var rightKeys = ["Map", "Exit"];
+        // ---- Right buttons (Map) ----
+        var rightKeys = ["Map"];
         var rightActions = {
-            Map: function() { /* placeholder */ },
-            Exit: function() { SceneManager.exit(); }
+            Map: function () { /* placeholder */ }
         };
-        var rightIdle = [images.ButtonMapIdle, images.ButtonExitIdle];
-        var rightHover = [images.ButtonMapHover, images.ButtonExitHover];
-        var rightTexts = ["Inspect Map", "Exit The Game"];
+        var rightIdle = [images.ButtonMapIdle];
+        var rightHover = [images.ButtonMapHover];
+
         for (var j = 0; j < rightKeys.length; j++) {
             var key = rightKeys[j];
             var cfg = rightLayout[key];
+            if (!cfg) continue;
+
+            var buttonText = cfg.text || "Inspect Map";
+
             var btn = new LOGICPULSE.UI.HUDButton({
                 x: cfg.x,
                 y: cfg.y,
@@ -1198,9 +1258,11 @@ LOGICPULSE.Scene_HUD = class extends Scene_Base {
                 height: cfg.height,
                 idleBitmap: LOGICPULSE.Assets.load(folders.HUD, rightIdle[j]),
                 hoverBitmap: LOGICPULSE.Assets.load(folders.HUD, rightHover[j]),
-                text: rightTexts[j],
-                fontSize: 30,
+                text: buttonText,
+                fontSize: 28,
                 textColor: "#ffffff",
+                textOffsetX: cfg.textOffsetX || 0,
+                textOffsetY: cfg.textOffsetY || 0,
                 onClick: rightActions[key]
             });
             this.addChild(btn);
