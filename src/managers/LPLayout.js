@@ -48,11 +48,22 @@ LOGICPULSE.HUDLayout = {
         GoldValue: {x: 280, y: 30, w: 120, h: 40, align: "left", fontSize: 18, color: "#ffffff"},
     },
     QuestBox: {
-        CaseTitle: {x: 60, y: 5, w: 560, h: 32, align: "left", fontSize: 32, color: "#ff8000"},
-        CaseNumber: {x: 405, y: 320, w: 540, h: 32, align: "left", fontSize: 20, color: "#ff8000"},
-        Hint1: {x: 415, y: 365, w: 540, h: 32, align: "left", fontSize: 20, color: "#ffffff"},
-        Hint2: {x: 415, y: 400, w: 540, h: 32, align: "left", fontSize: 20, color: "#ffffff"},
-        Hint3: {x: 415, y: 435, w: 540, h: 32, align: "left", fontSize: 20, color: "#ffffff"},
-        Description: {x: 380, y: 540, w: 580, h: 86, align: "left", fontSize: 20, color: "#ffffff"}
+        //quest name
+        CaseTitle: {x: 50, y: 63, w: 560, h: 32, align: "left", fontSize: 26, color: "#ffffff"},
+        //quest ID with padding (e.g. 001 for id 1)
+        CaseNumber: {x: 60, y: 5, w: 540, h: 32, align: "left", fontSize: 32, color: "#ff8000"},
+        HintMask: {x: 80, y: 112, w: 540, h: 40,},
+        HintText: {x: 0, y: 0, align: "left", fontSize: 16,},
+        //Objectives scrollable mask
+        ObjectivesMask: {x: 36, y: 141, w: 595, h: 145 },
+        //ObjectivesBox asset position
+        ObjectivesBox: {x: 0, y: 0, w: 595, h: 36, spacing: 0.1 },
+        //Objectives Texts position relative to ObjectivesBox
+        ObjectivesTexts: {x: 40, y: 5, w: 595, h: 36, align: "left", fontSize: 20, color: "#ffffff"},
+        Notes: {x: 60, y: 327, w: 540, h: 32, align: "left", fontSize: 22, color: "#ff8000"},
+        //on-Screen Hint Command Extra note position and scrollable mask (if it doesn't have any extra note show quest Description)
+        DescriptionMask: {x: 40, y: 360, w: 590, h: 120, align: "left", fontSize: 20, color: "#ffffff"},
+        Description: {x: 0, y: 4, w: 590, h: 100, align: "left", fontSize: 20, color: "#ffffff"},
+
     }
 };

@@ -92,23 +92,69 @@ LOGICPULSE.HUDProvider = {
         }
         return "None";
     },
-    // Quest data – uses game variables (adjust indices to match your project)
+
+
+    // ---- Quest data – priority quest from quest plugin ----
+    getPriorityQuest: function() {
+        if (!LOGICPULSE.QuestManager) return null;
+        return LOGICPULSE.QuestManager.getPriorityQuest();
+    },
+
+    getPriorityQuestDetails: function() {
+        if (!LOGICPULSE.QuestManager) {
+            console.warn('[HUD] QuestManager not available.');
+            return null;
+        }
+        var priority = LOGICPULSE.QuestManager.getPriorityQuest();
+        if (!priority) {
+            console.log('[HUD] No priority quest set.');
+            return null;
+        }
+        var details = LOGICPULSE.QuestManager.getQuestDetails(priority.chapterId, priority.questId);
+        console.log('[HUD] Priority quest details:', details);
+        return details;
+    },
+
     getCaseTitle: function() {
-        return $gameVariables.value(1) || "No Case";
+        var details = this.getPriorityQuestDetails();
+        return details ? details.name : "No Priority Quest";
     },
+
     getCaseNumber: function() {
-        return $gameVariables.value(2) || "";
+        var priority = this.getPriorityQuest();
+        if (!priority) return "";
+        return "Chapter " + priority.chapterId + " Quest " + priority.questId;
     },
-    getHint1: function() {
-        return $gameVariables.value(3) || "";
+
+    // ---- Objectives for the scrollable list ----
+    getObjectives: function() {
+        var details = this.getPriorityQuestDetails();
+        if (!details || !details.objectives) return [];
+        return details.objectives;
     },
-    getHint2: function() {
-        return $gameVariables.value(4) || "";
+
+    // ---- Extra note from the on‑screen hint (for the active objective) ----
+    getExtraNote: function() {
+        var priority = this.getPriorityQuest();
+        if (!priority) return null;
+        // We need to find which objective is active and has an extra note.
+        // If multiple are active, we could show the first one or combine them.
+        var details = this.getPriorityQuestDetails();
+        if (!details || !details.objectives) return null;
+        for (var obj of details.objectives) {
+            if (obj.state === LOGICPULSE.Constants.Quest.ObjectiveState.Active) {
+                // Check if this objective has an extra note stored
+                if (LOGICPULSE.QuestManager) {
+                    var note = LOGICPULSE.QuestManager.getOnScreenExtraNote(priority.chapterId, priority.questId, obj.id);
+                    if (note) return note;
+                }
+            }
+        }
+        return null;
     },
-    getHint3: function() {
-        return $gameVariables.value(5) || "";
-    },
+
     getDescription: function() {
-        return $gameVariables.value(6) || "";
+        var details = this.getPriorityQuestDetails();
+        return details ? details.description || "" : "";
     }
 };

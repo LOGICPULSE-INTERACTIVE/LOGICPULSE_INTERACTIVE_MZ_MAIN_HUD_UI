@@ -176,7 +176,7 @@ LOGICPULSE.Scene_HUD = class extends Scene_Base {
 
     // ---- Quest Content ----
     createQuestContent() {
-        this._questDisplay = new LOGICPULSE.UI.QuestDisplay();
+        this._questDisplay = new LOGICPULSE.UI.HUDQuestDisplay();
         this.addChild(this._questDisplay);
     }
 
@@ -193,7 +193,7 @@ LOGICPULSE.Scene_HUD = class extends Scene_Base {
         var leftActions = {
             Inventory: function () { SceneManager.push(LOGICPULSE.Scenes.Inventory); },
             Equipment: function () { SceneManager.push(Scene_Equip); },
-            QuestDB: function () { /* placeholder */ },
+            QuestDB: function () { SceneManager.push(LOGICPULSE.Scene_QuestLog); },
             Skill: function () { SceneManager.push(Scene_Skill); },
             SaveLoad: function () { SceneManager.push(LOGICPULSE.Scenes.SaveLoad); },
             Setting: function () { SceneManager.push(Scene_Options); },
@@ -275,6 +275,7 @@ LOGICPULSE.Scene_HUD = class extends Scene_Base {
 
     // ---- Update loop ----
     update() {
+        LOGICPULSE.Mouse.update();
         super.update();
 
         // Update animations
@@ -285,6 +286,23 @@ LOGICPULSE.Scene_HUD = class extends Scene_Base {
         this.updateHeaderTexts();
         if (this._statusDisplay) this._statusDisplay.updateAll();
         if (this._questDisplay) this._questDisplay.updateAll();
+
+        // ---- Wheel handling for quest display ----
+        var wheelDelta = LOGICPULSE.Mouse._wheelDelta;
+        if (wheelDelta !== 0 && this._questDisplay) {
+            var mx = LOGICPULSE.Mouse.x();
+            var my = LOGICPULSE.Mouse.y();
+            var consumed = this._questDisplay.handleWheel(mx, my, wheelDelta);
+            if (consumed) {
+                LOGICPULSE.Mouse._wheelDelta = 0; // reset to prevent further use
+            }
+        }
+        // ---- Click handling for objectives ----
+        if (TouchInput.isTriggered() && this._questDisplay) {
+            var mx = TouchInput.x;
+            var my = TouchInput.y;
+            this._questDisplay.handleClick(mx, my);
+        }
 
         // Buttons
         this._controller.update();

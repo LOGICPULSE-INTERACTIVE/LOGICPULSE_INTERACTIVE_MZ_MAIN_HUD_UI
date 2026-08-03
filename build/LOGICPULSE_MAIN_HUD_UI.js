@@ -16,7 +16,7 @@
  *
  * Edit the files inside /src instead.
  *
- * Build Date: 2026-07-28T21:02:52.555Z
+ * Build Date: 2026-08-03T02:14:04.000Z
  * ============================================================================
  */
 
@@ -75,6 +75,7 @@ LOGICPULSE.Constants.HUD = Object.freeze({
         CaseNotesBox: "Case Notes Box",
         CharacterStatusBox: "Character Status Box",
         QuestBox: "Current Quest Box",
+        QuestObjectiveBox:"Quest Objective Box", // new (added it just now for the quest plugin)
         MapBox: "Map Box",
         PortraitBox: "Portrait Box",
         LeftButtonIdle: "Button Idle",
@@ -169,12 +170,23 @@ LOGICPULSE.HUDLayout = {
         GoldValue: {x: 280, y: 30, w: 120, h: 40, align: "left", fontSize: 18, color: "#ffffff"},
     },
     QuestBox: {
-        CaseTitle: {x: 60, y: 5, w: 560, h: 32, align: "left", fontSize: 32, color: "#ff8000"},
-        CaseNumber: {x: 405, y: 320, w: 540, h: 32, align: "left", fontSize: 20, color: "#ff8000"},
-        Hint1: {x: 415, y: 365, w: 540, h: 32, align: "left", fontSize: 20, color: "#ffffff"},
-        Hint2: {x: 415, y: 400, w: 540, h: 32, align: "left", fontSize: 20, color: "#ffffff"},
-        Hint3: {x: 415, y: 435, w: 540, h: 32, align: "left", fontSize: 20, color: "#ffffff"},
-        Description: {x: 380, y: 540, w: 580, h: 86, align: "left", fontSize: 20, color: "#ffffff"}
+        //quest name
+        CaseTitle: {x: 50, y: 63, w: 560, h: 32, align: "left", fontSize: 26, color: "#ffffff"},
+        //quest ID with padding (e.g. 001 for id 1)
+        CaseNumber: {x: 60, y: 5, w: 540, h: 32, align: "left", fontSize: 32, color: "#ff8000"},
+        HintMask: {x: 80, y: 112, w: 540, h: 40,},
+        HintText: {x: 0, y: 0, align: "left", fontSize: 16,},
+        //Objectives scrollable mask
+        ObjectivesMask: {x: 36, y: 141, w: 595, h: 145 },
+        //ObjectivesBox asset position
+        ObjectivesBox: {x: 0, y: 0, w: 595, h: 36, spacing: 0.1 },
+        //Objectives Texts position relative to ObjectivesBox
+        ObjectivesTexts: {x: 40, y: 5, w: 595, h: 36, align: "left", fontSize: 20, color: "#ffffff"},
+        Notes: {x: 60, y: 327, w: 540, h: 32, align: "left", fontSize: 22, color: "#ff8000"},
+        //on-Screen Hint Command Extra note position and scrollable mask (if it doesn't have any extra note show quest Description)
+        DescriptionMask: {x: 40, y: 360, w: 590, h: 120, align: "left", fontSize: 20, color: "#ffffff"},
+        Description: {x: 0, y: 4, w: 590, h: 100, align: "left", fontSize: 20, color: "#ffffff"},
+
     }
 };
 
@@ -292,24 +304,70 @@ LOGICPULSE.HUDProvider = {
         }
         return "None";
     },
-    // Quest data – uses game variables (adjust indices to match your project)
+
+
+    // ---- Quest data – priority quest from quest plugin ----
+    getPriorityQuest: function() {
+        if (!LOGICPULSE.QuestManager) return null;
+        return LOGICPULSE.QuestManager.getPriorityQuest();
+    },
+
+    getPriorityQuestDetails: function() {
+        if (!LOGICPULSE.QuestManager) {
+            console.warn('[HUD] QuestManager not available.');
+            return null;
+        }
+        var priority = LOGICPULSE.QuestManager.getPriorityQuest();
+        if (!priority) {
+            console.log('[HUD] No priority quest set.');
+            return null;
+        }
+        var details = LOGICPULSE.QuestManager.getQuestDetails(priority.chapterId, priority.questId);
+        console.log('[HUD] Priority quest details:', details);
+        return details;
+    },
+
     getCaseTitle: function() {
-        return $gameVariables.value(1) || "No Case";
+        var details = this.getPriorityQuestDetails();
+        return details ? details.name : "No Priority Quest";
     },
+
     getCaseNumber: function() {
-        return $gameVariables.value(2) || "";
+        var priority = this.getPriorityQuest();
+        if (!priority) return "";
+        return "Chapter " + priority.chapterId + " Quest " + priority.questId;
     },
-    getHint1: function() {
-        return $gameVariables.value(3) || "";
+
+    // ---- Objectives for the scrollable list ----
+    getObjectives: function() {
+        var details = this.getPriorityQuestDetails();
+        if (!details || !details.objectives) return [];
+        return details.objectives;
     },
-    getHint2: function() {
-        return $gameVariables.value(4) || "";
+
+    // ---- Extra note from the on‑screen hint (for the active objective) ----
+    getExtraNote: function() {
+        var priority = this.getPriorityQuest();
+        if (!priority) return null;
+        // We need to find which objective is active and has an extra note.
+        // If multiple are active, we could show the first one or combine them.
+        var details = this.getPriorityQuestDetails();
+        if (!details || !details.objectives) return null;
+        for (var obj of details.objectives) {
+            if (obj.state === LOGICPULSE.Constants.Quest.ObjectiveState.Active) {
+                // Check if this objective has an extra note stored
+                if (LOGICPULSE.QuestManager) {
+                    var note = LOGICPULSE.QuestManager.getOnScreenExtraNote(priority.chapterId, priority.questId, obj.id);
+                    if (note) return note;
+                }
+            }
+        }
+        return null;
     },
-    getHint3: function() {
-        return $gameVariables.value(5) || "";
-    },
+
     getDescription: function() {
-        return $gameVariables.value(6) || "";
+        var details = this.getPriorityQuestDetails();
+        return details ? details.description || "" : "";
     }
 };
 
@@ -929,21 +987,40 @@ LOGICPULSE.UI.StatusDisplay = class extends PIXI.Container {
 // LPHUDQuest.js
 //=============================================================================
 
+//=============================================================================
+// LPHUDQuest.js – with auto‑select active objective
+//=============================================================================
+
 LOGICPULSE.UI = LOGICPULSE.UI || {};
 
-LOGICPULSE.UI.QuestDisplay = class extends PIXI.Container {
+LOGICPULSE.UI.HUDQuestDisplay = class extends PIXI.Container {
     constructor(options) {
         super();
         options = options || {};
         this._provider = options.provider || LOGICPULSE.HUDProvider;
         this._layout = options.layout || LOGICPULSE.HUDLayout.QuestBox;
 
-        // Position at QuestBox location
         var boxPos = this._getBoxPosition("QuestBox");
         this.x = boxPos.x;
         this.y = boxPos.y;
 
-        this._createTexts();
+        this._objScrollY = 0;
+        this._objContentHeight = 0;
+        this._descScrollY = 0;
+        this._descContentHeight = 0;
+        this._lastDescText = '';
+
+
+        this._selectedObjectiveId = null;
+        this._selectedObjectiveState = 0;
+        this._objectiveRects = [];
+        this._currentDetails = null;
+
+        this._createStaticTexts();
+        this._createNotesLabel();
+        this._createObjectivesMaskAndContainer();
+        this._createDescriptionMaskAndContainer();
+        this._createHintText();
         this.updateAll();
     }
 
@@ -957,10 +1034,10 @@ LOGICPULSE.UI.QuestDisplay = class extends PIXI.Container {
         return { x: 0, y: 0 };
     }
 
-    _createTexts() {
+    _createStaticTexts() {
         this._texts = {};
         var layout = this._layout;
-        var keys = ["CaseTitle", "CaseNumber", "Hint1", "Hint2", "Hint3", "Description"];
+        var keys = ["CaseTitle", "CaseNumber"];
         for (var i = 0; i < keys.length; i++) {
             var key = keys[i];
             var cfg = layout[key];
@@ -979,15 +1056,408 @@ LOGICPULSE.UI.QuestDisplay = class extends PIXI.Container {
             this._texts[key] = text;
         }
     }
+    _createNotesLabel() {
+        const cfg = this._layout.Notes;
+        if (!cfg) return;
+
+        this._notesLabel = new LOGICPULSE.UI.Text({
+            x: cfg.x,
+            y: cfg.y,
+            width: cfg.w,
+            height: cfg.h,
+            fontSize: cfg.fontSize || 32,
+            textColor: cfg.color || "#ff8000",
+            align: cfg.align || "left",
+            fontFace: cfg.font || $gameSystem.mainFontFace(),
+            text: "Current Case Note:"
+        });
+
+        this.addChild(this._notesLabel);
+    }
+
+
+
+    _createHintText() {
+        const maskCfg = this._layout.HintMask;
+        const textCfg = this._layout.HintText;
+
+        if (!maskCfg) return;
+
+        // --- MASK ---
+        this._hintMask = new PIXI.Graphics();
+        this._hintMask.beginFill(0xffffff);
+        this._hintMask.drawRect(maskCfg.x, maskCfg.y, maskCfg.w, maskCfg.h);
+        this._hintMask.endFill();
+        this.addChild(this._hintMask);
+
+        // --- CONTAINER ---
+        this._hintContainer = new PIXI.Container();
+        this._hintContainer.x = maskCfg.x;
+        this._hintContainer.y = maskCfg.y;
+        this._hintContainer.mask = this._hintMask;
+        this.addChild(this._hintContainer);
+
+        // --- TEXT STYLE ---
+        this._hintStyle = new PIXI.TextStyle({
+            fontFamily: $gameSystem.mainFontFace(),
+            fontSize: textCfg.fontSize || maskCfg.fontSize || 16,
+            fill: maskCfg.color || "#ff8000",
+            align: textCfg.align || "left",
+            wordWrap: true,
+            wordWrapWidth: maskCfg.w
+        });
+
+        // --- TEXT INSIDE CONTAINER ---
+        this._hintText = new PIXI.Text("", this._hintStyle);
+
+        // IMPORTANT: relative to container, NOT screen
+        this._hintText.x = textCfg.x || 0;
+        this._hintText.y = textCfg.y || 0;   // ← moves text down inside the box
+
+        this._hintContainer.addChild(this._hintText);
+    }
+
+
+
+
+    _createObjectivesMaskAndContainer() {
+        var L = this._layout;
+        var maskCfg = L.ObjectivesMask;
+        var boxCfg = L.ObjectivesBox;
+
+        this._objMask = new PIXI.Graphics();
+        this._objMask.beginFill(0xffffff);
+        this._objMask.drawRect(maskCfg.x, maskCfg.y, maskCfg.w, maskCfg.h);
+        this._objMask.endFill();
+        this._objMask.visible = true;
+        this.addChild(this._objMask);
+
+        this._objContainer = new PIXI.Container();
+        this._objContainer.x = maskCfg.x;
+        this._objContainer.y = maskCfg.y;
+        this._objContainer.mask = this._objMask;
+        this.addChild(this._objContainer);
+
+        this._objMaskRect = { x: maskCfg.x, y: maskCfg.y, w: maskCfg.w, h: maskCfg.h };
+        this._objBoxHeight = boxCfg.h || 36;
+        var spacing = boxCfg.spacing || 5;
+        if (spacing < 1) spacing = 5;
+        this._objSpacing = spacing;
+    }
+
+    _createDescriptionMaskAndContainer() {
+        var L = this._layout;
+        var descMaskCfg = L.DescriptionMask;
+        var descCfg = L.Description;
+
+        this._descMask = new PIXI.Graphics();
+        this._descMask.beginFill(0xffffff);
+        this._descMask.drawRect(descMaskCfg.x, descMaskCfg.y, descMaskCfg.w, descMaskCfg.h);
+        this._descMask.endFill();
+        this._descMask.visible = true;
+        this.addChild(this._descMask);
+
+        this._descContainer = new PIXI.Container();
+        this._descContainer.x = descMaskCfg.x;
+        this._descContainer.y = descMaskCfg.y;
+        this._descContainer.mask = this._descMask;
+        this.addChild(this._descContainer);
+
+        this._descText = new LOGICPULSE.UI.Text({
+            x: descCfg.x || 0,
+            y: descCfg.y || 0,
+            width: descCfg.w || descMaskCfg.w,
+            height: 999,
+            fontSize: descCfg.fontSize || 20,
+            textColor: descCfg.color || "#ffffff",
+            align: descCfg.align || "left",
+            fontFace: descCfg.font || $gameSystem.mainFontFace()
+        });
+        this._descContainer.addChild(this._descText);
+
+        this._descMaskRect = { x: descMaskCfg.x, y: descMaskCfg.y, w: descMaskCfg.w, h: descMaskCfg.h };
+    }
 
     updateAll() {
         var provider = this._provider;
+        var details = provider.getPriorityQuestDetails();
+        this._currentDetails = details;
+
         this._texts.CaseTitle.setText(provider.getCaseTitle());
         this._texts.CaseNumber.setText(provider.getCaseNumber());
-        this._texts.Hint1.setText(provider.getHint1());
-        this._texts.Hint2.setText(provider.getHint2());
-        this._texts.Hint3.setText(provider.getHint3());
-        this._texts.Description.setText(provider.getDescription());
+
+        var showInactive = details ? details.showInactive : false;
+        this._updateObjectives(details, showInactive);
+        this._updateDescription(details);
+        this._autoSelectDefaultObjective(); // ← auto‑select active objective
+        this._updateHint();
+    }
+
+    _updateObjectives(details, showInactive) {
+        this._objContainer.removeChildren();
+        this._objectiveRects = [];
+
+        if (!details || !details.objectives || details.objectives.length === 0) {
+            this._objContentHeight = 0;
+            this._objScrollY = 0;
+            this._objContainer.y = this._objMaskRect.y;
+            return;
+        }
+
+        var filteredObjectives = details.objectives;
+        if (!showInactive) {
+            filteredObjectives = details.objectives.filter(function(obj) {
+                return obj.state !== 0;
+            });
+        }
+
+        if (filteredObjectives.length === 0) {
+            this._objContentHeight = 0;
+            this._objScrollY = 0;
+            this._objContainer.y = this._objMaskRect.y;
+            return;
+        }
+
+        var y = 0;
+        var S = LOGICPULSE.Constants.Quest.ObjectiveState;
+        var boxH = this._objBoxHeight;
+        var spacing = this._objSpacing;
+        var maskW = this._objMaskRect.w;
+
+        for (var obj of filteredObjectives) {
+            var stateText = "Inactive";
+            var color = "#ffffff";
+            if (obj.state === S.Active) {
+                stateText = "Active";
+                color = "#ffffff";
+            } else if (obj.state === S.Completed) {
+                stateText = "Completed";
+                color = "#44ff44";
+            } else if (obj.state === S.Failed) {
+                stateText = "Failed";
+                color = "#ff4444";
+            }
+
+            // Background
+            var boxSprite = LOGICPULSE.Assets.createSprite(
+                LOGICPULSE.Assets.Folders.HUD,
+                LOGICPULSE.Assets.Images.HUD.QuestObjectiveBox
+            );
+            if (boxSprite && boxSprite.texture) {
+                boxSprite.width = maskW;
+                boxSprite.height = boxH;
+                boxSprite.x = 0;
+                boxSprite.y = y;
+                this._objContainer.addChild(boxSprite);
+            } else {
+                var bg = new PIXI.Graphics();
+                bg.beginFill(0x333333);
+                bg.drawRect(0, y, maskW, boxH);
+                bg.endFill();
+                this._objContainer.addChild(bg);
+            }
+
+            var textCfg = this._layout.ObjectivesTexts || { x: 40, y: 0, w: 595, h: 36, align: "center", fontSize: 20, color: "#ffffff" };
+            var text = new LOGICPULSE.UI.Text({
+                x: textCfg.x,
+                y: y + textCfg.y,
+                width: textCfg.w || maskW - textCfg.x - 10,
+                height: textCfg.h || boxH,
+                fontSize: textCfg.fontSize || 20,
+                textColor: color,
+                align: textCfg.align || "left",
+                text: obj.description + " [" + stateText + "]",
+                fontFace: textCfg.font || $gameSystem.mainFontFace()
+            });
+            this._objContainer.addChild(text);
+
+            this._objectiveRects.push({
+                id: obj.id,
+                state: obj.state,
+                y: y,
+                height: boxH,
+                hint: obj.hint || ""
+            });
+
+            y += boxH + spacing;
+        }
+
+        this._objContentHeight = Math.max(0, y - spacing);
+        var maxScroll = Math.max(0, this._objContentHeight - this._objMaskRect.h);
+        if (this._objScrollY < -maxScroll) this._objScrollY = -maxScroll;
+        if (this._objScrollY > 0) this._objScrollY = 0;
+        this._objContainer.y = this._objMaskRect.y + this._objScrollY;
+    }
+
+    _updateDescription(details) {
+        var text = "";
+        if (details && details.objectives) {
+            var priority = this._provider.getPriorityQuest();
+            if (priority) {
+                for (var obj of details.objectives) {
+                    if (obj.state === LOGICPULSE.Constants.Quest.ObjectiveState.Active) {
+                        var note = LOGICPULSE.QuestManager.getOnScreenExtraNote(
+                            priority.chapterId,
+                            priority.questId,
+                            obj.id
+                        );
+                        if (note) {
+                            text = note;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        if (!text && details) {
+            text = details.description || "";
+        }
+
+        if (text !== this._lastDescText) {
+            this._lastDescText = text;
+            this._descScrollY = 0;
+        }
+
+        this._descText.setText(text);
+
+        var width = this._descText._width || this._descMaskRect.w;
+        var fontSize = this._descText._fontSize || 20;
+        var fontFace = this._descText._fontFace || $gameSystem.mainFontFace();
+
+        var style = new PIXI.TextStyle({
+            fontFamily: fontFace,
+            fontSize: fontSize,
+            fill: "#ffffff",
+            align: this._descText._align || "left",
+            wordWrap: true,
+            wordWrapWidth: width,
+            breakWords: true
+        });
+        var measureText = new PIXI.Text(text || " ", style);
+        var textHeight = measureText.height;
+        measureText.destroy();
+
+        var padding = 20;
+        var bottomPadding = 30;
+        this._descContentHeight = Math.max(textHeight + padding + bottomPadding, this._descMaskRect.h);
+
+        var maxScroll = Math.max(0, this._descContentHeight - this._descMaskRect.h);
+        if (this._descScrollY < -maxScroll) this._descScrollY = -maxScroll;
+        if (this._descScrollY > 0) this._descScrollY = 0;
+        this._descContainer.y = this._descMaskRect.y + this._descScrollY;
+    }
+
+    // ---- Auto‑select the last active objective ----
+    _autoSelectDefaultObjective() {
+        if (!this._currentDetails || !this._currentDetails.objectives) return;
+
+        // If we already have a selected objective that exists, keep it.
+        var exists = this._objectiveRects.some(function(r) { return r.id === this._selectedObjectiveId; }.bind(this));
+        if (exists) return;
+
+        // Find active objectives (state === 1)
+        var activeObjectives = this._currentDetails.objectives.filter(function(obj) {
+            return obj.state === LOGICPULSE.Constants.Quest.ObjectiveState.Active;
+        });
+
+        var targetObj = null;
+        if (activeObjectives.length > 0) {
+            // Pick the last active objective (by index)
+            targetObj = activeObjectives[activeObjectives.length - 1];
+        } else {
+            // If no active objective, pick the first visible objective (or first overall)
+            // We'll pick the first objective that is not inactive, or first overall.
+            var visibleObjectives = this._currentDetails.objectives.filter(function(obj) {
+                return obj.state !== 0;
+            });
+            targetObj = visibleObjectives.length > 0 ? visibleObjectives[0] : this._currentDetails.objectives[0];
+        }
+
+        if (targetObj) {
+            this._selectedObjectiveId = targetObj.id;
+            this._selectedObjectiveState = targetObj.state;
+        } else {
+            this._selectedObjectiveId = null;
+        }
+    }
+
+    // ---- Update OnScreenHint text and color ----
+    _updateHint() {
+        if (!this._hintText) return;
+        var hint = "";
+        var color = "#ff8000";
+        var selected = this._objectiveRects.find(function(r) {
+            return r.id === this._selectedObjectiveId;
+        }.bind(this));
+
+        if (selected) {
+            hint = selected.hint || "";
+            if (selected.state === LOGICPULSE.Constants.Quest.ObjectiveState.Active) {
+                color = "#ffffff";
+            } else if (selected.state === LOGICPULSE.Constants.Quest.ObjectiveState.Completed) {
+                color = "#44ff44";
+            } else if (selected.state === LOGICPULSE.Constants.Quest.ObjectiveState.Failed) {
+                color = "#ff4444";
+            } else {
+                color = "#888888";
+            }
+        }
+
+        this._hintText.text = hint || "";
+        this._hintStyle.fill = color;
+        this._hintText.style = this._hintStyle;
+    }
+
+    // ---- Click handling ----
+    handleClick(mx, my) {
+        var containerWorldX = this.x + this._objContainer.x;
+        var containerWorldY = this.y + this._objContainer.y;
+        var rects = this._objectiveRects;
+        for (var i = 0; i < rects.length; i++) {
+            var r = rects[i];
+            var rectWorldY = containerWorldY + r.y;
+            if (mx >= containerWorldX && mx <= containerWorldX + this._objMaskRect.w &&
+                my >= rectWorldY && my <= rectWorldY + r.height) {
+                this._selectedObjectiveId = r.id;
+                this._selectedObjectiveState = r.state;
+                this._updateHint();
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // ---- Mouse wheel ----
+    handleWheel(mx, my, delta) {
+        var rect = this._objMaskRect;
+        var worldX = this.x + rect.x;
+        var worldY = this.y + rect.y;
+        if (mx >= worldX && mx <= worldX + rect.w &&
+            my >= worldY && my <= worldY + rect.h) {
+            var maxScroll = Math.max(0, this._objContentHeight - rect.h);
+            if (maxScroll > 0) {
+                this._objScrollY -= delta * 10;
+                this._objScrollY = Math.max(-maxScroll, Math.min(0, this._objScrollY));
+                this._objContainer.y = rect.y + this._objScrollY;
+                return true;
+            }
+            return false;
+        }
+
+        var descRect = this._descMaskRect;
+        var worldX2 = this.x + descRect.x;
+        var worldY2 = this.y + descRect.y;
+        if (mx >= worldX2 && mx <= worldX2 + descRect.w &&
+            my >= worldY2 && my <= worldY2 + descRect.h) {
+            var maxScrollDesc = Math.max(0, this._descContentHeight - descRect.h);
+            if (maxScrollDesc > 0) {
+                this._descScrollY -= delta * 10;
+                this._descScrollY = Math.max(-maxScrollDesc, Math.min(0, this._descScrollY));
+                this._descContainer.y = descRect.y + this._descScrollY;
+                return true;
+            }
+        }
+        return false;
     }
 };
 
@@ -1174,7 +1644,7 @@ LOGICPULSE.Scene_HUD = class extends Scene_Base {
 
     // ---- Quest Content ----
     createQuestContent() {
-        this._questDisplay = new LOGICPULSE.UI.QuestDisplay();
+        this._questDisplay = new LOGICPULSE.UI.HUDQuestDisplay();
         this.addChild(this._questDisplay);
     }
 
@@ -1191,7 +1661,7 @@ LOGICPULSE.Scene_HUD = class extends Scene_Base {
         var leftActions = {
             Inventory: function () { SceneManager.push(LOGICPULSE.Scenes.Inventory); },
             Equipment: function () { SceneManager.push(Scene_Equip); },
-            QuestDB: function () { /* placeholder */ },
+            QuestDB: function () { SceneManager.push(LOGICPULSE.Scene_QuestLog); },
             Skill: function () { SceneManager.push(Scene_Skill); },
             SaveLoad: function () { SceneManager.push(LOGICPULSE.Scenes.SaveLoad); },
             Setting: function () { SceneManager.push(Scene_Options); },
@@ -1273,6 +1743,7 @@ LOGICPULSE.Scene_HUD = class extends Scene_Base {
 
     // ---- Update loop ----
     update() {
+        LOGICPULSE.Mouse.update();
         super.update();
 
         // Update animations
@@ -1283,6 +1754,23 @@ LOGICPULSE.Scene_HUD = class extends Scene_Base {
         this.updateHeaderTexts();
         if (this._statusDisplay) this._statusDisplay.updateAll();
         if (this._questDisplay) this._questDisplay.updateAll();
+
+        // ---- Wheel handling for quest display ----
+        var wheelDelta = LOGICPULSE.Mouse._wheelDelta;
+        if (wheelDelta !== 0 && this._questDisplay) {
+            var mx = LOGICPULSE.Mouse.x();
+            var my = LOGICPULSE.Mouse.y();
+            var consumed = this._questDisplay.handleWheel(mx, my, wheelDelta);
+            if (consumed) {
+                LOGICPULSE.Mouse._wheelDelta = 0; // reset to prevent further use
+            }
+        }
+        // ---- Click handling for objectives ----
+        if (TouchInput.isTriggered() && this._questDisplay) {
+            var mx = TouchInput.x;
+            var my = TouchInput.y;
+            this._questDisplay.handleClick(mx, my);
+        }
 
         // Buttons
         this._controller.update();

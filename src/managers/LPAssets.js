@@ -13,6 +13,7 @@
         CaseNotesBox: "Case Notes Box",
         CharacterStatusBox: "Character Status Box",
         QuestBox: "Current Quest Box",
+        QuestObjectiveBox:"Quest Objective Box", // new (added it just now for the quest plugin)
         MapBox: "Map Box",
         PortraitBox: "Portrait Box",
         LeftButtonIdle: "Button Idle",
